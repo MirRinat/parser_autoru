@@ -7,7 +7,7 @@ import pandas as pd
 
 def get_car(mark, model, nameplt=""):
     result = []
-    count_page = 1
+    count_page = 80
     for a in range(1, count_page + 1):
 
         #Параметры запроса
@@ -35,7 +35,7 @@ def get_car(mark, model, nameplt=""):
                     result.append(model)
                     result.append(nameplt)
                     file.write(str(result) + "\n")
-            result = []
+                    result = []
             break
         i = 0
         while i <= len(data) - 1:
@@ -44,7 +44,7 @@ def get_car(mark, model, nameplt=""):
             img_url = []
             for img in data[i]['state']['image_urls']:
                 img_url.append(img['sizes']['1200x900'])
-
+            # print('a')
             #Марка автомобиля
             try: Marka_info = str(data[i]['vehicle_info']['mark_info']['name'])
             except: Marka_info = 'Not marka info'
@@ -93,12 +93,10 @@ def download_image(path, url):
 def main():
     df = pd.read_excel('список.xlsx')
     df['Плт'].fillna("", inplace=True)
-    print(df.dtypes)
-    # df['Поколение'].fillna(0, inplace=True)
-    # df['Поколение'].replace(0, "", inplace=True)
     print(df)
 
     for mark, model, name_plt in zip(df['Марка'],df['Модель'],df['Плт']):
+        # result = []
         mark, model, name_plt = str(mark).upper(), str(model).upper(), str(name_plt).lower()
         print(mark, model, name_plt)
         result = get_car(mark, model, name_plt)
@@ -110,10 +108,7 @@ def main():
             json.dump(result, file,indent=2)
 
         with open(result_txt, 'r') as f:
-            try:models = [DromCarModelOffer(m) for m in json.load(f)]
-            except ValueError:
-                print('CANT READ FILE AND change car to class')
-                break
+            models = [DromCarModelOffer(t) for t in json.load(f)]
 
         for k, m in enumerate(models):
             path = BASEPATH + "{}/{}/{}/{}/".format(m.mark, m.model, m.nameplt, m.generation)
