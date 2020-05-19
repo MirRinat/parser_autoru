@@ -14,11 +14,9 @@ car = {"mark": "",
         "generation": "",
         "url": ""}
 
-global Marka_info, Model_info, Name_plt, Gen_info
+BASEPATH = '/Users/rinatmirzagalamov/dlain-cars/parserautoru/data/'
 
-BASEPATH = '/Users/rinatmirzagalamov/dlain-cars/parserautoru/not_found/'
-
-result_txt = '/Users/rinatmirzagalamov/dlain-cars/parserautoru/list_auto_no_found.txt'
+result_txt = '/Users/rinatmirzagalamov/dlain-cars/parserautoru/list_auto.txt'
 
 URL = 'https://auto.ru/-/ajax/desktop/listing/'
 

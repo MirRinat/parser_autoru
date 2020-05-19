@@ -5,14 +5,14 @@ from variables import *
 import pandas as pd
 
 
-def get_car(mark,model,generation="", nameplt=""):
+def get_car(mark, model, nameplt=""):
     result = []
-    count_page = 99
-    for a in range(1, count_page+1):
+    count_page = 1
+    for a in range(1, count_page + 1):
 
         #Параметры запроса
         PARAMS = {
-            'catalog_filter' : [{"mark": mark, "model": model, "nameplate_name": nameplt, "generation": generation}],
+            'catalog_filter' : [{"mark": mark, "model": model, "nameplate_name": nameplt}],
             "customs_state_group": "DOESNT_MATTER",
             'section': "all",
             'category': "cars",
@@ -22,20 +22,23 @@ def get_car(mark,model,generation="", nameplt=""):
             'page': a
             }
 
-        response = requests.post(URL, json=PARAMS, headers=HEADERS)
+        try:response = requests.post(URL, json=PARAMS, headers=HEADERS)
+        except: print("!!!!!!!!!!CANT POST!!!!!!!!")
 
         data = response.json()['offers']
 
         if (len(data) == 0):
             if (a == 1):
-                print("NOT FOUND {}  {}".format(mark, model))
-                with open('no_cars_one.txt', 'a') as file:
+                print("NOT FOUND {}  {} {}".format(mark, model, nameplt))
+                with open('no_cars.txt', 'a') as file:
                     result.append(mark)
                     result.append(model)
+                    result.append(nameplt)
                     file.write(str(result) + "\n")
+            result = []
             break
         i = 0
-        while i <= len(data) -1:
+        while i <= len(data) - 1:
 
             #Картинки автомобиля
             img_url = []
@@ -58,9 +61,7 @@ def get_car(mark,model,generation="", nameplt=""):
             try: Gen_info = str(data[i]['vehicle_info']['super_gen']['ru_name']).split()[0]
             except: Gen_info = '1'
 
-
-
-            # Перебираем ссылки из словаря img_url, и записываем их в одну переменную текстом
+            # Перебираем ссылки из словаря img_url
             for link_img_0 in img_url:
                 link_img = "https:" + str(link_img_0)
                 dict_copy = car.copy()
@@ -81,7 +82,7 @@ def download_image(path, url):
         response = requests.get(url, stream=True)
 
         if not response.ok:
-            print (response)
+            print(response)
 
         for block in response.iter_content(1024):
             if not block:
@@ -90,30 +91,34 @@ def download_image(path, url):
             handle.write(block)
 
 def main():
-
-
-    df = pd.read_excel('1 список.xlsx')
+    df = pd.read_excel('список.xlsx')
+    df['Плт'].fillna("", inplace=True)
+    print(df.dtypes)
+    # df['Поколение'].fillna(0, inplace=True)
+    # df['Поколение'].replace(0, "", inplace=True)
     print(df)
 
-    # for i, j in zip(df['Марка'],df['Модель']):
-    #     print(str(i).upper(), str(j).upper())
-    #
-    #     # print(result)
-    # result = get_car(str(i).upper(), str(j).upper())
-    result = get_car("KIA", "CERATO")
-    # print(result)
-    with open(result_txt, 'w', encoding='UTF-8') as file:
-        json.dump(result, file,indent=2)
+    for mark, model, name_plt in zip(df['Марка'],df['Модель'],df['Плт']):
+        mark, model, name_plt = str(mark).upper(), str(model).upper(), str(name_plt).lower()
+        print(mark, model, name_plt)
+        result = get_car(mark, model, name_plt)
 
-    with open(result_txt, 'r') as f:
-        models = [DromCarModelOffer(m) for m in json.load(f)]
+        if result == []:
+            continue
 
-    for k, m in enumerate(models):
-        path = BASEPATH + "{}/{}/{}/{}/".format(m.mark, m.model,m.nameplt, m.generation)
-        os.makedirs(path, exist_ok=True)
-        download_image(path + '{}.jpg'.format(k), m.url)
+        with open(result_txt, 'w', encoding='UTF-8') as file:
+            json.dump(result, file,indent=2)
 
+        with open(result_txt, 'r') as f:
+            try:models = [DromCarModelOffer(m) for m in json.load(f)]
+            except ValueError:
+                print('CANT READ FILE AND change car to class')
+                break
 
+        for k, m in enumerate(models):
+            path = BASEPATH + "{}/{}/{}/{}/".format(m.mark, m.model, m.nameplt, m.generation)
+            os.makedirs(path, exist_ok=True)
+            download_image(path + '{}.jpg'.format(k), m.url)
 
 
 if __name__ == "__main__":
