@@ -5,14 +5,14 @@ from variables import *
 import pandas as pd
 
 
-def get_car(mark, model, nameplt=""):
+def get_car(mark, model='', nameplt="", generation=''):
     result = []
-    count_page = 80
+    count_page = 99
     for a in range(1, count_page + 1):
 
         #Параметры запроса
         PARAMS = {
-            'catalog_filter' : [{"mark": mark, "model": model, "nameplate_name": nameplt}],
+            'catalog_filter' : [{"mark": mark, "model": model,"generation":generation, "nameplate_name": nameplt}],
             "customs_state_group": "DOESNT_MATTER",
             'section': "all",
             'category': "cars",
@@ -91,15 +91,18 @@ def download_image(path, url):
             handle.write(block)
 
 def main():
-    df = pd.read_excel('список.xlsx')
+    df = pd.read_excel('список2.xlsx')
     df['Плт'].fillna("", inplace=True)
+    df['Поколение'].fillna(0,inplace=True)
+    df['Поколение'] = df['Поколение'].astype(int)
+    df['Поколение'].replace(0,"",inplace=True)
     print(df)
 
-    for mark, model, name_plt in zip(df['Марка'],df['Модель'],df['Плт']):
+    for mark, model, name_plt, gen in zip(df['Марка'],df['Модель'],df['Плт'], df['Поколение']):
         # result = []
-        mark, model, name_plt = str(mark).upper(), str(model).upper(), str(name_plt).lower()
-        print(mark, model, name_plt)
-        result = get_car(mark, model, name_plt)
+        mark, model, name_plt, gen = str(mark).upper(), str(model).upper(), str(name_plt).lower(), str(gen)
+        print(mark, model, name_plt, gen)
+        result = get_car(mark, model, name_plt,gen)
 
         if result == []:
             continue
